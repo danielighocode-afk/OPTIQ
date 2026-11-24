@@ -4,12 +4,12 @@ const config: CapacitorConfig = {
   appId: 'com.optiq.app',
   appName: 'OPTIQ',
   webDir: 'dist',
-  backgroundColor: '#050c2b',
+  backgroundColor: '#ffffff',
   plugins: {
     SplashScreen: {
       launchShowDuration: 600,
       launchAutoHide: true,
-      backgroundColor: '#050c2b',
+      backgroundColor: '#ffffff',
       showSpinner: false,
     },
   },

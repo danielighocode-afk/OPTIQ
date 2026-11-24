@@ -32,8 +32,8 @@ The logo is at `public/resources/logo.png`. Replace the file to change it.
 
 Splash, sign up (or sign in), email check, three intro slides, then level and set, then the app. The profile page is the last tab.
 
-- Sign up, sign in, the email check and the Google, Apple and email buttons are mock-ups. Nothing is sent, and no password is stored. The account (name, email, phone, photo) is saved in the browser only.
-- Sign in only works with the email used to sign up on the same device.
+- With Supabase set up (see `docs/SUPABASE_SETUP.md`), sign up, sign in, email verification, password reset and Google sign-in are real, and profiles and quiz scores are saved to the cloud.
+- Without the Supabase keys the app runs in local preview mode: accounts are mock-ups kept on the device, and the Apple and email-link buttons are previews either way.
 - Dark mode is in Profile, and also on the sign up and sign in pages. Animations switch off for people who have reduced motion turned on.
 
 ## Android APK (debug)

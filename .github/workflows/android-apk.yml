@@ -38,12 +38,25 @@ jobs:
 
       - name: Build the web app
         working-directory: ${{ steps.dir.outputs.path }}
-        run: npm run build
+        env:
+          # Set these under Settings > Secrets and variables > Actions > Variables.
+          # The anon key is public by design. Never put the service role key here.
+          VITE_SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$VITE_SUPABASE_URL" ] || [ -z "$VITE_SUPABASE_ANON_KEY" ]; then
+            echo "::warning::SUPABASE_URL / SUPABASE_ANON_KEY are not set. Building in local preview mode."
+          fi
+          npm run build
 
       - name: Create the Android project
         working-directory: ${{ steps.dir.outputs.path }}
         run: |
           [ -d android ] || npx cap add android
+
+      - name: Allow the app to receive sign-in links
+        working-directory: ${{ steps.dir.outputs.path }}
+        run: node scripts/patch-android-manifest.cjs
 
       - name: Generate app icon and splash screen
         working-directory: ${{ steps.dir.outputs.path }}

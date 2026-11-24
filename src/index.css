@@ -468,3 +468,81 @@ h1, h2, h3, p { margin: 0; }
 /* App-like feel inside the Android shell */
 html, body { overscroll-behavior-y: none; -webkit-tap-highlight-color: transparent; }
 button, .tab, .chip { -webkit-user-select: none; user-select: none; }
+
+/* white start-up loader: painted logo reveal, loops until the app is ready */
+.boot { position: fixed; inset: 0; background: #fff; display: flex; align-items: center; justify-content: center; z-index: 50; animation: fadeIn .25s ease both; }
+.boot-logo { position: relative; width: min(74vw, 320px); aspect-ratio: 900 / 646; }
+.boot-eye, .boot-word { position: absolute; left: 0; right: 0; overflow: hidden; }
+.boot-eye { top: 0; height: 69.35%; animation: bootEye 3.4s cubic-bezier(.45,.05,.25,1) infinite; }
+.boot-word { top: 69.35%; height: 30.65%; animation: bootWord 3.4s cubic-bezier(.45,.05,.25,1) infinite;
+  -webkit-mask-image: linear-gradient(90deg, #000 0 33.3%, transparent 66.6%); mask-image: linear-gradient(90deg, #000 0 33.3%, transparent 66.6%);
+  -webkit-mask-size: 300% 100%; mask-size: 300% 100%; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; }
+.boot-eye img, .boot-word img { position: absolute; left: 0; width: 100%; height: auto; display: block; user-select: none; -webkit-user-drag: none; }
+.boot-eye img { top: 0; }
+.boot-word img { top: -226.3%; }
+.boot-label { position: absolute; left: 0; right: 0; top: calc(50% + min(74vw, 320px) * .36 + 30px); text-align: center; margin: 0; font-size: 16px; font-weight: 600; letter-spacing: .03em; color: #1b2a6b; animation: pulseText 1.6s ease-in-out infinite; }
+@keyframes bootEye {
+  0% { clip-path: ellipse(0% 0% at 50% 45%); opacity: 1; transform: scale(.96); }
+  34% { clip-path: ellipse(82% 92% at 50% 45%); transform: scale(1); }
+  86% { clip-path: ellipse(82% 92% at 50% 45%); opacity: 1; transform: scale(1); }
+  96% { clip-path: ellipse(82% 92% at 50% 45%); opacity: 0; }
+  100% { clip-path: ellipse(0% 0% at 50% 45%); opacity: 0; }
+}
+@keyframes bootWord {
+  0%, 24% { -webkit-mask-position: 100% 0; mask-position: 100% 0; opacity: 1; }
+  64% { -webkit-mask-position: 0 0; mask-position: 0 0; }
+  86% { -webkit-mask-position: 0 0; mask-position: 0 0; opacity: 1; }
+  96% { -webkit-mask-position: 0 0; mask-position: 0 0; opacity: 0; }
+  100% { -webkit-mask-position: 100% 0; mask-position: 100% 0; opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .boot-eye, .boot-word { animation: none; }
+  .boot-word { -webkit-mask-position: 0 0; mask-position: 0 0; }
+}
+
+/* onboarding: two steps with a search bar for the set */
+.steps { display: flex; align-items: center; gap: 12px; margin: 4px 0 6px; }
+.steps-bars { flex: 1; display: flex; gap: 6px; }
+.steps-bars i { flex: 1; height: 6px; border-radius: 6px; background: var(--line); position: relative; overflow: hidden; }
+.steps-bars i::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, #14c8bf, var(--royal)); transform: scaleX(0); transform-origin: left; transition: transform .5s cubic-bezier(.3,.8,.3,1); }
+.steps-bars i.on::after { transform: scaleX(1); }
+.steps > span { font-size: 13px; font-weight: 600; color: var(--head); opacity: .75; white-space: nowrap; }
+.step-in { animation: stepIn .4s cubic-bezier(.3,.8,.3,1) both; }
+@keyframes stepIn { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: none; } }
+.step-title { font-size: 20px !important; margin: 14px 0 12px !important; }
+.set-search { display: flex; align-items: center; gap: 10px; background: var(--card); border: 1.5px solid var(--line); border-radius: 16px; padding: 0 14px; height: 54px; color: var(--head); transition: border-color .2s, box-shadow .2s; }
+.set-search:focus-within { border-color: var(--royal); box-shadow: 0 0 0 4px rgba(30, 80, 210, .14); }
+.set-search.chosen { border-color: #14c8bf; }
+.set-search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; font-size: 16px; font-weight: 600; color: var(--head); }
+.set-search input::placeholder { font-weight: 400; opacity: .55; }
+.set-clear { border: 0; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--line); color: var(--head); padding: 0; }
+.sug-label { margin: 16px 2px 8px; font-size: 13px; font-weight: 600; opacity: .65; color: var(--head); }
+.sug-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.sug-list li { animation: sugIn .32s cubic-bezier(.3,.8,.3,1) both; animation-delay: calc(var(--i) * 45ms); }
+@keyframes sugIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.sug { width: 100%; display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: var(--card); border: 1.5px solid var(--line); border-radius: 14px; font: inherit; font-weight: 600; font-size: 16px; color: var(--head); text-align: left; transition: transform .15s, border-color .2s; }
+.sug > span:nth-child(2) { flex: 1; }
+.sug:active { transform: scale(.98); border-color: var(--royal); }
+.sug svg:last-child { opacity: .5; }
+.sug-ico { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: rgba(20, 200, 191, .14); color: #12a7a8; }
+.sug-empty { margin: 18px 4px; text-align: center; font-size: 14px; opacity: .7; color: var(--head); }
+.sug-picked { display: flex; align-items: center; gap: 8px; margin: 16px 2px; font-weight: 600; color: #12a7a8; animation: sugIn .3s both; }
+.back-btn { display: inline-flex; align-items: center; gap: 6px; }
+
+/* home hero: blinking eye */
+.home-art-wrap { position: absolute; z-index: 1; right: 0; top: 70px; height: 190px; aspect-ratio: 205 / 225; }
+.home-art-wrap .home-art { position: static; display: block; width: 100%; height: 100%; }
+.eye-blink { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.eye-blink .lid { transform-box: fill-box; transform-origin: 50% 0; transform: scaleY(0); animation: eyeBlink 9s ease-in-out 1.6s infinite; }
+@keyframes eyeBlink {
+  0%, 29% { transform: scaleY(0); }
+  31%, 32.5% { transform: scaleY(1); }
+  35.5% { transform: scaleY(0); }
+  78% { transform: scaleY(0); }
+  79.5%, 80.5% { transform: scaleY(1); }
+  83% { transform: scaleY(0); }
+  84.5%, 85.5% { transform: scaleY(1); }
+  89% { transform: scaleY(0); }
+  100% { transform: scaleY(0); }
+}
+@media (prefers-reduced-motion: reduce) { .eye-blink .lid { animation: none; } }

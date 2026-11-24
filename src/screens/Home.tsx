@@ -32,7 +32,24 @@ export default function Home({ profile, account, results, go }: Props) {
             {account.avatar ? <img src={account.avatar} alt='' /> : <StudentAvatar size={40} />}
           </button>
         </div>
-        <img className='hero-art home-art' src={art('home-art')} alt='' />
+        <div className='home-art-wrap' aria-hidden='true'>
+          <img className='hero-art home-art' src={art('home-art')} alt='' />
+          <svg className='eye-blink' viewBox='0 0 205 225'>
+            <defs>
+              <linearGradient id='lidGrad' x1='0' y1='0' x2='0' y2='1'>
+                <stop offset='0' stopColor='#3d96ec' />
+                <stop offset='1' stopColor='#1b5fcc' />
+              </linearGradient>
+            </defs>
+            <path
+              className='lid'
+              fill='url(#lidGrad)'
+              stroke='rgba(9,38,120,.55)'
+              strokeWidth='.8'
+              d='M0 115 C14 109 24 106 36 107 C56 108 72 116 86 130 C99 143 109 154 117 165 C100 165 88 167 72 168 C54 168 36 160 22 150 C12 144 5 140 0 137 Z'
+            />
+          </svg>
+        </div>
         <div className='hero-copy'>
           <p className='hello'>Welcome Back,</p>
           <h1 className='hello-name'>

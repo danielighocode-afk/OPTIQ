@@ -9,10 +9,15 @@ import { ThemePill } from '../components/ThemeToggle';
 interface Props {
   mode: 'signup' | 'signin';
   account: Account | null;
+  notice?: string;
   onBack: () => void;
   onSwitch: () => void;
-  onSignup: (a: Account) => void;
-  onSignin: () => void;
+  /** Resolve with an error message to show, or nothing on success. */
+  onSignup: (a: Account, password: string) => Promise<string | void>;
+  onSignin: (email: string, password: string) => Promise<string | void>;
+  /** Resolve with a message to show in the toast. */
+  onForgot: (email: string) => Promise<string>;
+  onGoogle: () => Promise<string | void>;
 }
 
 interface FieldProps {
@@ -49,7 +54,7 @@ function Field({ icon, type = 'text', placeholder, value, onChange, autoComplete
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
-export default function Auth({ mode, account, onBack, onSwitch, onSignup, onSignin }: Props) {
+export default function Auth({ mode, account, notice, onBack, onSwitch, onSignup, onSignin, onForgot, onGoogle }: Props) {
   const signup = mode === 'signup';
   const [name, setName] = useState('');
   const [email, setEmail] = useState(signup ? '' : account?.email ?? '');
@@ -72,10 +77,17 @@ export default function Auth({ mode, account, onBack, onSwitch, onSignup, onSign
 
   const demo = (msg: string) => {
     setToast(msg);
-    later(() => setToast(''), 2200);
+    later(() => setToast(''), 3200);
   };
 
-  const submit = (e: FormEvent) => {
+  useEffect(() => {
+    if (!notice) return;
+    setToast(notice);
+    const t = window.setTimeout(() => setToast(''), 4500);
+    return () => window.clearTimeout(t);
+  }, [notice]);
+
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
     if (busy) return;
     const cleanEmail = email.trim().toLowerCase();
@@ -83,15 +95,25 @@ export default function Auth({ mode, account, onBack, onSwitch, onSignup, onSign
     if (!EMAIL_RE.test(cleanEmail)) return setError('Please enter a valid email address.');
     if (password.length < 6) return setError('Password must be at least 6 characters.');
     if (signup && password !== confirm) return setError('Passwords do not match.');
-    if (!signup && (!account || account.email !== cleanEmail)) {
-      return setError('No account with that email on this device. Please sign up first.');
-    }
     setError('');
     setBusy(true);
-    later(() => {
-      if (signup) onSignup({ name: name.trim(), email: cleanEmail, phone: phone.trim() || undefined });
-      else onSignin();
-    }, 800);
+    const problem = signup
+      ? await onSignup({ name: name.trim(), email: cleanEmail, phone: phone.trim() || undefined }, password)
+      : await onSignin(cleanEmail, password);
+    setBusy(false);
+    if (problem) setError(problem);
+  };
+
+  const forgot = async () => {
+    const cleanEmail = email.trim().toLowerCase();
+    if (!EMAIL_RE.test(cleanEmail)) return setError('Enter your email above first, then tap Forgot password.');
+    setError('');
+    demo(await onForgot(cleanEmail));
+  };
+
+  const google = async () => {
+    const message = await onGoogle();
+    if (message) demo(message);
   };
 
   return (
@@ -120,7 +142,7 @@ export default function Auth({ mode, account, onBack, onSwitch, onSignup, onSign
         </div>
 
         {!signup && (
-          <button type='button' className='link-btn right' onClick={() => demo('Password reset is not available yet')}>
+          <button type='button' className='link-btn right' onClick={forgot}>
             Forgot password?
           </button>
         )}
@@ -141,7 +163,7 @@ export default function Auth({ mode, account, onBack, onSwitch, onSignup, onSign
           <span>or continue with</span>
         </div>
         <div className='socials'>
-          <button type='button' className='social' onClick={() => demo('Google sign-in is a preview only')} aria-label='Continue with Google'>
+          <button type='button' className='social' onClick={google} aria-label='Continue with Google'>
             <GoogleIcon />
           </button>
           <button type='button' className='social' onClick={() => demo('Apple sign-in is a preview only')} aria-label='Continue with Apple'>

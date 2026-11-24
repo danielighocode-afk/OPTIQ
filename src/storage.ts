@@ -6,6 +6,7 @@ const ACCOUNT_KEY = 'optiq.account';
 const SESSION_KEY = 'optiq.session';
 const INTRO_KEY = 'optiq.intro';
 const THEME_KEY = 'optiq.theme';
+const OWNER_KEY = 'optiq.owner';
 
 function read<T>(key: string): T | null {
   try {
@@ -51,6 +52,10 @@ export function saveResult(quizId: string, score: number, total: number): Result
   return updated;
 }
 
+export function saveResults(results: Results): void {
+  write(RESULTS_KEY, results);
+}
+
 export function percent(r: Result): number {
   return r.total > 0 ? Math.round((r.best / r.total) * 100) : 0;
 }
@@ -87,4 +92,22 @@ export function loadTheme(): Theme {
 
 export function saveTheme(theme: Theme): void {
   write(THEME_KEY, theme);
+}
+
+// Which signed-in user the cached data belongs to (cloud mode), so one student's
+// cache is never shown to another on the same phone.
+export function loadOwner(): string | null {
+  return read<string>(OWNER_KEY);
+}
+
+export function saveOwner(id: string): void {
+  write(OWNER_KEY, id);
+}
+
+export function clearUserData(): void {
+  try {
+    [PROFILE_KEY, RESULTS_KEY, ACCOUNT_KEY, SESSION_KEY, OWNER_KEY].forEach((k) => window.localStorage.removeItem(k));
+  } catch {
+    // nothing to clear
+  }
 }

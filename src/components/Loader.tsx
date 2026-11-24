@@ -35,6 +35,24 @@ function Spinner({ variant }: { variant: LoaderVariant }) {
   );
 }
 
+/** White start-up screen: the logo is painted in (eye opens, wordmark sweeps in) and repeats until the app is ready. */
+export function BootLoader({ label = 'App Loading...' }: { label?: string }) {
+  const src = art('logo-full');
+  return (
+    <div className='boot' role='status' aria-live='polite'>
+      <div className='boot-logo' aria-hidden='true'>
+        <div className='boot-eye'>
+          <img src={src} alt='' />
+        </div>
+        <div className='boot-word'>
+          <img src={src} alt='' />
+        </div>
+      </div>
+      <p className='boot-label'>{label}</p>
+    </div>
+  );
+}
+
 export default function Loader({ variant = 'ring', label = 'Loading...' }: Props) {
   return (
     <div className='loader' role='status' aria-live='polite'>
