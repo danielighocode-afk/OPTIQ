@@ -464,3 +464,7 @@ h1, h2, h3, p { margin: 0; }
 .tutor .qa-ico { margin: 0 auto 8px; }
 
 @media (max-width: 380px) { .home-art { height: 160px; } .hello-name { font-size: 32px; } .stat-card strong { font-size: 18px; } }
+
+/* App-like feel inside the Android shell */
+html, body { overscroll-behavior-y: none; -webkit-tap-highlight-color: transparent; }
+button, .tab, .chip { -webkit-user-select: none; user-select: none; }

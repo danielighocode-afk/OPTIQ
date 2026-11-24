@@ -35,3 +35,9 @@ Splash, sign up (or sign in), email check, three intro slides, then level and se
 - Sign up, sign in, the email check and the Google, Apple and email buttons are mock-ups. Nothing is sent, and no password is stored. The account (name, email, phone, photo) is saved in the browser only.
 - Sign in only works with the email used to sign up on the same device.
 - Dark mode is in Profile, and also on the sign up and sign in pages. Animations switch off for people who have reduced motion turned on.
+
+## Android APK (debug)
+
+A GitHub Actions workflow (`.github/workflows/android-apk.yml`) builds a debug APK with Capacitor on every push to `main`, or by hand from the Actions tab (Run workflow). Open the finished run and download `optiq-debug-apk` under Artifacts. Unzip it, copy `app-debug.apk` to a phone and install it (Android asks you to allow installs from your browser or file manager).
+
+The `android/` folder is generated during the build and is not committed. App ID: `com.optiq.app`. App name: OPTIQ. Icon and splash come from the pictures in `assets/`.
