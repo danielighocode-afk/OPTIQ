@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { ArrowRight, Search, SlidersHorizontal } from 'lucide-react';
 import { QUIZZES } from '../data/quizzes';
 import type { Results } from '../types';
@@ -17,7 +17,7 @@ export default function Quizzes({ results, go }: Props) {
   const [query, setQuery] = useState('');
   const [notTaken, setNotTaken] = useState(false);
 
-  const groups = useMemo(() => Array.from(new Set(QUIZZES.map((q) => groupOf(q.courseCode)))), []);
+  const groups = Array.from(new Set(QUIZZES.map((q) => groupOf(q.courseCode))));
   const q = query.trim().toLowerCase();
 
   const visible = QUIZZES.filter(

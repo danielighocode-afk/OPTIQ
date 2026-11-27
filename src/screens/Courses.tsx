@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { ChevronRight, Search, SlidersHorizontal } from 'lucide-react';
-import { COURSES_BY_LEVEL, GROUPS, LEVELS } from '../data/courses';
+import { COURSES_BY_LEVEL, LEVELS, groupNames } from '../data/courses';
 import { quizzesForCourse } from '../data/quizzes';
 import type { Results } from '../types';
 import { percent } from '../storage';
@@ -32,7 +32,7 @@ export default function Courses({ level, results, go }: Props) {
   const filtered = all.filter(
     (c) => (!q || c.code.toLowerCase().includes(q) || c.title.toLowerCase().includes(q)) && (!onlyQuizzes || quizzesForCourse(c.code).length > 0),
   );
-  const groups = GROUPS.map((name) => ({
+  const groups = groupNames().map((name) => ({
     name,
     items: filtered.filter((c) => c.group === name).sort((a, b) => a.code.localeCompare(b.code)),
   })).filter((g) => g.items.length > 0);

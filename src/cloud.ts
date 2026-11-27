@@ -3,7 +3,8 @@ import { Browser } from '@capacitor/browser';
 import { Capacitor } from '@capacitor/core';
 import { NATIVE_REDIRECT } from './config';
 import { supabase } from './supabase';
-import type { Account, Profile, Result, Results } from './types';
+import { sanitizeCourses, sanitizeQuizzes, sanitizeTopics } from './storage';
+import type { Account, CourseRow, Profile, Quiz, Result, Results, Topic } from './types';
 
 function client() {
   if (!supabase) throw new Error('Backend is not configured');
@@ -187,6 +188,64 @@ export async function fetchResults(userId: string): Promise<Results> {
     out[r.quiz_id] = { best: r.best, last: r.last, total: r.total, attempts: r.attempts };
   }
   return out;
+}
+
+interface QuizRow {
+  id: string;
+  course_code: string;
+  title: string;
+  questions: unknown;
+}
+
+/** The quizzes managed in the admin dashboard. Returns null when they cannot be loaded, so the app keeps what it has. */
+export async function fetchQuizzes(): Promise<Quiz[] | null> {
+  const { data, error } = await client()
+    .from('quizzes')
+    .select('id, course_code, title, questions')
+    .eq('published', true)
+    .order('created_at', { ascending: true });
+  if (error || !Array.isArray(data)) return null;
+  return sanitizeQuizzes((data as QuizRow[]).map((r) => ({ id: r.id, courseCode: r.course_code, title: r.title, questions: r.questions })));
+}
+
+/** The courses managed in the admin dashboard. Returns null when they cannot be loaded. */
+export async function fetchCourses(): Promise<CourseRow[] | null> {
+  const { data, error } = await client()
+    .from('courses')
+    .select('code, title, grp, level, semester, verified')
+    .eq('published', true)
+    .order('code', { ascending: true });
+  if (error || !Array.isArray(data)) return null;
+  return sanitizeCourses(
+    (data as Array<{ code: string; title: string; grp: string; level: number; semester: number | null; verified: boolean }>).map((r) => ({
+      code: r.code,
+      title: r.title,
+      group: r.grp,
+      level: r.level,
+      semester: r.semester,
+      verified: r.verified,
+    })),
+  );
+}
+
+/** The notes managed in the admin dashboard. Returns null when they cannot be loaded. */
+export async function fetchTopics(): Promise<Topic[] | null> {
+  const { data, error } = await client()
+    .from('topics')
+    .select('id, course_code, position, title, body')
+    .eq('published', true)
+    .order('course_code', { ascending: true })
+    .order('position', { ascending: true });
+  if (error || !Array.isArray(data)) return null;
+  return sanitizeTopics(
+    (data as Array<{ id: string; course_code: string; position: number; title: string; body: string }>).map((r) => ({
+      id: r.id,
+      courseCode: r.course_code,
+      position: r.position,
+      title: r.title,
+      body: r.body,
+    })),
+  );
 }
 
 export async function upsertResult(userId: string, quizId: string, r: Result): Promise<void> {

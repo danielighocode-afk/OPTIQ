@@ -1,6 +1,12 @@
 import type { Quiz } from '../types';
+import { cloudEnabled } from '../config';
+import { loadQuizCache } from '../storage';
 
-// HOW TO ADD A QUIZ
+// With the backend connected, quizzes are managed in the OPTIQ admin dashboard and this list is
+// replaced by the published quizzes when the app starts. The quizzes below are the starting
+// content and the fallback when the phone is offline and has never loaded the online list.
+//
+// HOW TO ADD A BUNDLED QUIZ (only needed without the backend)
 // 1. Copy one of the objects below and paste it at the end of the list.
 // 2. courseCode must match a course code exactly, for example 'MTH 101'.
 // 3. answer is the position of the correct option, counting from 0.
@@ -37,6 +43,17 @@ export const QUIZZES: Quiz[] = [
     ],
   },
 ];
+
+/** Replace the quiz list in place. Screens read this array whenever they render. */
+export function setQuizzes(list: Quiz[]): void {
+  QUIZZES.splice(0, QUIZZES.length, ...list);
+}
+
+// Show the last list downloaded from the backend straight away, even before the phone is online.
+if (cloudEnabled) {
+  const cached = loadQuizCache();
+  if (cached) setQuizzes(cached);
+}
 
 export function quizzesForCourse(code: string): Quiz[] {
   return QUIZZES.filter((q) => q.courseCode === code);

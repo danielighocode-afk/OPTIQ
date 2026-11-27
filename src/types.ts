@@ -6,6 +6,18 @@ export interface Course {
   verified: boolean;
 }
 
+export interface CourseRow extends Course {
+  level: number;
+}
+
+export interface Topic {
+  id: string;
+  courseCode: string;
+  position: number;
+  title: string;
+  body: string;
+}
+
 export interface Question {
   text: string;
   options: string[];

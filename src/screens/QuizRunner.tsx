@@ -9,7 +9,8 @@ interface Props {
 }
 
 export default function QuizRunner({ quizId, go, onFinish }: Props) {
-  const quiz = QUIZZES.find((q) => q.id === quizId);
+  // Keep the quiz as it was when the student started it, even if the list refreshes mid-quiz.
+  const [quiz] = useState(() => QUIZZES.find((q) => q.id === quizId));
   const [index, setIndex] = useState(0);
   const [picked, setPicked] = useState<number | null>(null);
   const [answers, setAnswers] = useState<number[]>([]);

@@ -1,4 +1,4 @@
-import type { Account, Profile, Result, Results, Theme } from './types';
+import type { Account, CourseRow, Profile, Question, Quiz, Result, Results, Theme, Topic } from './types';
 
 const PROFILE_KEY = 'optiq.profile';
 const RESULTS_KEY = 'optiq.results';
@@ -7,6 +7,9 @@ const SESSION_KEY = 'optiq.session';
 const INTRO_KEY = 'optiq.intro';
 const THEME_KEY = 'optiq.theme';
 const OWNER_KEY = 'optiq.owner';
+const QUIZ_CACHE_KEY = 'optiq.quizzes';
+const COURSE_CACHE_KEY = 'optiq.courses';
+const TOPIC_CACHE_KEY = 'optiq.topics';
 
 function read<T>(key: string): T | null {
   try {
@@ -23,6 +26,85 @@ function write(key: string, value: unknown): void {
   } catch {
     // storage is unavailable, so progress will not persist
   }
+}
+
+/** Keep only well-formed quizzes, so a bad row can never crash a screen. */
+export function sanitizeQuizzes(input: unknown): Quiz[] {
+  if (!Array.isArray(input)) return [];
+  const out: Quiz[] = [];
+  for (const raw of input) {
+    if (!raw || typeof raw !== 'object') continue;
+    const r = raw as Record<string, unknown>;
+    if (typeof r.id !== 'string' || typeof r.courseCode !== 'string' || typeof r.title !== 'string' || !Array.isArray(r.questions)) continue;
+    const questions: Question[] = [];
+    for (const item of r.questions) {
+      if (!item || typeof item !== 'object') continue;
+      const q = item as Record<string, unknown>;
+      if (typeof q.text !== 'string' || !q.text || !Array.isArray(q.options) || q.options.length < 2) continue;
+      if (!q.options.every((o) => typeof o === 'string')) continue;
+      const options = q.options as string[];
+      const answer = q.answer;
+      if (typeof answer !== 'number' || !Number.isInteger(answer) || answer < 0 || answer >= options.length) continue;
+      const question: Question = { text: q.text, options, answer };
+      if (typeof q.explanation === 'string' && q.explanation) question.explanation = q.explanation;
+      questions.push(question);
+    }
+    if (questions.length > 0) out.push({ id: r.id, courseCode: r.courseCode, title: r.title, questions });
+  }
+  return out;
+}
+
+/** Keep only well-formed courses from the backend. */
+export function sanitizeCourses(input: unknown): CourseRow[] {
+  if (!Array.isArray(input)) return [];
+  const out: CourseRow[] = [];
+  for (const raw of input) {
+    if (!raw || typeof raw !== 'object') continue;
+    const r = raw as Record<string, unknown>;
+    if (typeof r.code !== 'string' || !r.code || typeof r.title !== 'string' || !r.title || typeof r.group !== 'string' || !r.group) continue;
+    if (typeof r.level !== 'number' || ![100, 200, 300, 400, 500, 600].includes(r.level)) continue;
+    const course: CourseRow = { code: r.code, title: r.title, group: r.group, level: r.level, verified: r.verified !== false };
+    if (r.semester === 1 || r.semester === 2) course.semester = r.semester;
+    out.push(course);
+  }
+  return out;
+}
+
+/** Keep only well-formed topics from the backend. */
+export function sanitizeTopics(input: unknown): Topic[] {
+  if (!Array.isArray(input)) return [];
+  const out: Topic[] = [];
+  for (const raw of input) {
+    if (!raw || typeof raw !== 'object') continue;
+    const r = raw as Record<string, unknown>;
+    if (typeof r.id !== 'string' || !r.id || typeof r.courseCode !== 'string' || !r.courseCode || typeof r.title !== 'string' || !r.title) continue;
+    out.push({ id: r.id, courseCode: r.courseCode, position: typeof r.position === 'number' ? r.position : 0, title: r.title, body: typeof r.body === 'string' ? r.body : '' });
+  }
+  return out;
+}
+
+export function loadCourseCache(): CourseRow[] | null {
+  const cached = read<unknown>(COURSE_CACHE_KEY);
+  return Array.isArray(cached) ? sanitizeCourses(cached) : null;
+}
+export function saveCourseCache(list: CourseRow[]): void {
+  write(COURSE_CACHE_KEY, list);
+}
+export function loadTopicCache(): Topic[] | null {
+  const cached = read<unknown>(TOPIC_CACHE_KEY);
+  return Array.isArray(cached) ? sanitizeTopics(cached) : null;
+}
+export function saveTopicCache(list: Topic[]): void {
+  write(TOPIC_CACHE_KEY, list);
+}
+
+export function loadQuizCache(): Quiz[] | null {
+  const cached = read<unknown>(QUIZ_CACHE_KEY);
+  return Array.isArray(cached) ? sanitizeQuizzes(cached) : null;
+}
+
+export function saveQuizCache(list: Quiz[]): void {
+  write(QUIZ_CACHE_KEY, list);
 }
 
 export function loadProfile(): Profile | null {

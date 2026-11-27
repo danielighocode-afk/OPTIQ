@@ -15,10 +15,17 @@ import {
   saveIntroSeen,
   saveOwner,
   saveProfile,
+  saveCourseCache,
+  saveQuizCache,
+  saveTopicCache,
   saveResult,
   saveResults,
   saveSignedIn,
 } from './storage';
+import { setQuizzes } from './data/quizzes';
+import { setCourses } from './data/courses';
+import { setTopics } from './data/topics';
+import TopicReader from './screens/TopicReader';
 import { cloudEnabled } from './config';
 import * as cloud from './cloud';
 import type { Account, Profile as ProfileData, Results } from './types';
@@ -67,6 +74,7 @@ export default function AppShell() {
   const [booting, setBooting] = useState(true);
   const [authReady, setAuthReady] = useState(!cloudEnabled);
   const [syncing, setSyncing] = useState(false);
+  const [, setQuizVersion] = useState(0); // bumped when the quiz list changes, to redraw the screens
   const [recovery, setRecovery] = useState(false);
   const [notice, setNotice] = useState('');
   const [loader, setLoader] = useState<{ variant: LoaderVariant; label: string } | null>(null);
@@ -100,9 +108,37 @@ export default function AppShell() {
     // A ref (not a local flag) so a session load started before React's dev double-mount still lands.
     alive.current = true;
 
+    // Fetch what was published in the admin dashboard (quizzes, courses, notes) and show it everywhere.
+    const refreshQuizzes = async () => {
+      const [quizzes, courses, topics] = await Promise.all([
+        cloud.fetchQuizzes().catch(() => null),
+        cloud.fetchCourses().catch(() => null),
+        cloud.fetchTopics().catch(() => null),
+      ]);
+      if (!alive.current) return;
+      let changed = false;
+      if (quizzes) {
+        saveQuizCache(quizzes);
+        setQuizzes(quizzes);
+        changed = true;
+      }
+      if (courses && courses.length > 0) {
+        saveCourseCache(courses);
+        setCourses(courses);
+        changed = true;
+      }
+      if (topics) {
+        saveTopicCache(topics);
+        setTopics(topics);
+        changed = true;
+      }
+      if (changed) setQuizVersion((v) => v + 1);
+    };
+
     const load = async (session: Session) => {
       const id = session.user.id;
       setSyncing(true);
+      void refreshQuizzes();
       const owner = loadOwner();
       if (owner && owner !== id) clearUserData(); // another student's cache
       try {
@@ -179,9 +215,16 @@ export default function AppShell() {
         if (alive.current) setAuthReady(true);
       });
 
+    // Pick up newly published quizzes when the student comes back to the app.
+    const onVisible = () => {
+      if (document.visibilityState === 'visible' && uid.current) void refreshQuizzes();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+
     return () => {
       alive.current = false;
       unsubscribe();
+      document.removeEventListener('visibilitychange', onVisible);
     };
   }, []);
 
@@ -394,6 +437,8 @@ export default function AppShell() {
   let screen: ReactNode;
   if (section === 'courses' && arg) {
     screen = <CourseDetail code={arg} results={results} go={go} />;
+  } else if (section === 'topic' && arg) {
+    screen = <TopicReader key={arg} id={arg} go={go} />;
   } else if (section === 'courses') {
     screen = <Courses level={profile.level} results={results} go={go} />;
   } else if (section === 'quizzes') {
@@ -420,7 +465,7 @@ export default function AppShell() {
   }
 
   const tab =
-    section === 'courses'
+    section === 'courses' || section === 'topic'
       ? 'courses'
       : section === 'quizzes' || section === 'quiz'
         ? 'quizzes'

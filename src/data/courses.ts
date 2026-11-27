@@ -1,4 +1,6 @@
-import type { Course } from '../types';
+import type { Course, CourseRow } from '../types';
+import { cloudEnabled } from '../config';
+import { loadCourseCache } from '../storage';
 
 export const LEVELS: number[] = [100, 200, 300, 400, 500, 600];
 
@@ -72,6 +74,29 @@ export const COURSES_BY_LEVEL: Record<number, Course[]> = {
   500: [],
   600: [],
 };
+
+/** Replace the course lists with the ones managed in the admin dashboard. Ignores an empty list. */
+export function setCourses(rows: CourseRow[]): void {
+  if (rows.length === 0) return;
+  for (const level of LEVELS) {
+    const list = COURSES_BY_LEVEL[level] ?? (COURSES_BY_LEVEL[level] = []);
+    list.splice(0, list.length, ...rows.filter((r) => r.level === level));
+  }
+}
+
+if (cloudEnabled) {
+  const cached = loadCourseCache();
+  if (cached) setCourses(cached);
+}
+
+/** The built-in groups first, then any group added in the dashboard. */
+export function groupNames(): string[] {
+  const extra: string[] = [];
+  for (const level of LEVELS) {
+    for (const c of COURSES_BY_LEVEL[level] ?? []) if (!GROUPS.includes(c.group) && !extra.includes(c.group)) extra.push(c.group);
+  }
+  return [...GROUPS, ...extra.sort()];
+}
 
 export function findCourse(code: string): Course | undefined {
   for (const level of LEVELS) {
